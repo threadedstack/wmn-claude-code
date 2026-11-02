@@ -125,10 +125,10 @@ try {
   // First start: theme, security notes, trust prompt (default is "No, exit", so pick Yes), then the prompt box.
   let ready = false;
   for (let i = 0; i < 10 && !ready; i++) {
-    const s = await waitScreen(/theme|trust this folder|Press Enter|\? for shortcuts|Try "|error|login/i, 600000);
+    const s = await waitScreen(/theme|trust this folder|Press Enter|\? for shortcuts|auto mode on|Try "|error|login/i, 600000);
     log(at(), `screen ${i}:\n` + red(s).split("\n").filter((l) => l.trim()).slice(-10).join("\n"));
     await shot(`2-claude-${i}`);
-    if (/\? for shortcuts|Try "/i.test(s)) { ready = true; break; }
+    if (/\? for shortcuts|auto mode on|Try "/i.test(s)) { ready = true; break; }
     if (/Yes, I trust this folder/.test(s)) await page.keyboard.press("ArrowDown");
     await page.keyboard.press("Enter");
     await page.waitForTimeout(5000);

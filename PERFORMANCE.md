@@ -53,6 +53,20 @@ The `BUN_JSC_*` options must be in the environment when `claude` starts (JavaScr
 
 The Terminal is about 7 times slower to draw in WebKit than in Chromium (2000 lines: 25 s against 3.5 s). Claude Code's interactive screen redraws all the time, so in WebKit the terminal, not the machine, is the limit. Not yet investigated further.
 
+## Live site, first check (2026-11-01)
+
+https://cc.threadedstack.com, built with wmn 0.1.7 and the chosen settings in `~/.claude-env`, checked with `tools/drive.mjs claude`, one browser at a time, while gate runs used the Mac (load average about 14). Times from `claude` started:
+
+| | Chromium | Firefox | WebKit |
+|---|---|---|---|
+| Claude Code prompt shows | 41 s | 48 s | 38 s |
+| Enter presses until the question was taken | 1 | 2 | 7 |
+| Answer after the question was taken | 18 s | 30 s | 84 s |
+
+In WebKit, the start took 3 to 8 minutes before (local build, wmn 0.1.5, no settings); now it takes under a minute. These are single runs: the change of build (wmn 0.1.7) and the settings were not measured apart. WebKit still takes more Enter presses and answers slower.
+
+Claude Code 2.1.316 now opens in auto mode: the prompt footer reads "auto mode on" instead of "? for shortcuts", and the driver waits for either.
+
 ## Open
 
 - Round 3, not run yet (stopped for low memory on the Mac): on top of the chosen settings, `--bare`, `CLAUDE_CODE_SIMPLE=1`, and `DISABLE_AUTOUPDATER=1 DISABLE_TELEMETRY=1 DISABLE_ERROR_REPORTING=1`. `--bare` and `CLAUDE_CODE_SIMPLE` skip hooks, LSP, plugin sync, auto-memory, background prefetches and keychain reads, and may turn off OAuth sign-in: use them only if `CLAUDE_CODE_OAUTH_TOKEN` still works and Claude Code keeps its full feature set.

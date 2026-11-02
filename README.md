@@ -15,7 +15,7 @@ Open http://127.0.0.1:31810/ in Chrome, Firefox or Safari, then:
 
 1. Press **Run** on the first block: the machine starts, prints `2.1.316 (Claude Code)` and writes Claude Code's settings so it skips its first-run questions.
 2. Open **Terminal**, press **New terminal**, run `read -rs CLAUDE_CODE_OAUTH_TOKEN && export CLAUDE_CODE_OAUTH_TOKEN`, paste your token (nothing shows), press Enter.
-3. Run `cd ~ && claude` and talk to Claude Code. It starts in about a minute in Chrome and Firefox and about three in Safari. If you type while it is still busy, it may take your Enter as a new line: press Enter again to send.
+3. Run `cd ~ && claude` and talk to Claude Code. It starts in under a minute in Chrome, Firefox and Safari. If you type while it is still busy, it may take your Enter as a new line: press Enter again to send.
 
 Make a token with `claude setup-token` on a computer where Claude Code is installed. Closing the tab ends the machine.
 
