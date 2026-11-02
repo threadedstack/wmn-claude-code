@@ -14,7 +14,7 @@ project=wmn-runbooks
 site=wmn-claude-code
 url="https://$site.web.app"
 version="$(git -C "$here" rev-parse HEAD)"
-[ -z "$(git -C "$here" status --porcelain)" ] || { echo "deploy.sh: commit your changes first (the site is stamped with the commit)" >&2; exit 1; }
+[ -z "$(git -C "$here" status --porcelain --untracked-files=no)" ] || { echo "deploy.sh: commit your changes first (the site is stamped with the commit)" >&2; exit 1; }
 
 "$here/build.sh" "$out" --host firebase --base /
 python3 - "$out/firebase.json" "$site" <<'PYEOF'
