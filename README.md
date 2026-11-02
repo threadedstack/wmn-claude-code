@@ -19,10 +19,23 @@ Open http://127.0.0.1:31810/ in Chrome, Firefox or Safari, then:
 
 Make a token with `claude setup-token` on a computer where Claude Code is installed. Closing the tab ends the machine.
 
+## Live site
+
+https://cc.threadedstack.com (also https://wmn-claude-code.web.app): Firebase Hosting, site `wmn-claude-code` in project `wmn-runbooks`. The first visit downloads about 500 MB (the machine image); the page keeps it for later visits.
+
+Deploy with `./deploy.sh` from a clean checkout. It follows wmn's runbooks deploy:
+1. Build with `--host firebase` and aim `firebase.json` at this site only.
+2. Stamp the build with `wmn-claude-code-version.json` (the commit).
+3. Copy the live site to the `previous` channel, deploy, and check that the new version is served.
+4. Put `previous` back if anything fails.
+
+`cc` is a CNAME at Porkbun to `wmn-claude-code.web.app`.
+
 ## Files
 
 - `notebook/index.wmn.md`: the page (the only folder published)
 - `build.sh`: publishes the site
+- `deploy.sh`: deploys it to Firebase Hosting
 - `serve.ts`: a static server that sends Cross-Origin-Opener-Policy, Cross-Origin-Embedder-Policy and Cross-Origin-Resource-Policy
 - `PLAN.md`: the spec and plan
 - `PERFORMANCE.md`: measurements and the speed settings tried, kept or dropped

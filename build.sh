@@ -7,5 +7,6 @@ here="$(cd "$(dirname "$0")" && pwd)"
 out="${1:-$here/../wmn-claude-code-site}"
 wmn="${WMN_BIN:-$(command -v wmn || true)}"
 [ -n "$wmn" ] || { echo "build.sh: no wmn on PATH; set WMN_BIN to the wmn binary" >&2; exit 1; }
-"$wmn" publish "$here/notebook" --out "$out" --runnable --title "Claude Code in your browser" ${WMN_ENGINE_DIR:+--engine "$WMN_ENGINE_DIR"}
+# extra arguments go to wmn publish (deploy.sh passes --host firebase --base /)
+"$wmn" publish "$here/notebook" --out "$out" --runnable --title "Claude Code in your browser" ${WMN_ENGINE_DIR:+--engine "$WMN_ENGINE_DIR"} "${@:2}"
 echo "built $out; serve it with: bun $here/serve.ts $out 31810"
