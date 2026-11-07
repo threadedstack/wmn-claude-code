@@ -1,6 +1,8 @@
 # Rebuilds this site with a wmn release and deploys it to Firebase Hosting (project wmn-runbooks) through ./deploy.sh.
 # Runs when threadedstack/wmn-releases publishes a release (it sends repository_dispatch "wmn-release" with the version),
-# when this repository's main changes (with the latest wmn release), or by hand.
+# when this repository's main changes (with the newest wmn release), or by hand.
+# Every site gets wmn the same way: the release's Linux binary (wmn-<version>-linux-x64) and its engine folder
+# (wmn-engine-<version>.tar.gz), each checked against its .sha256; the build uses that engine through WMN_ENGINE_DIR.
 # Sign-in is keyless: GitHub's OIDC token is exchanged for the gh-actions-deploy service account (Workload Identity Federation).
 name: Deploy
 
@@ -12,7 +14,7 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: "wmn version to build with (for example 0.1.77; empty: the latest release)"
+        description: "wmn version to build with (for example 0.1.77; empty: the newest release)"
         required: false
 
 concurrency:
@@ -25,7 +27,7 @@ permissions:
 
 jobs:
   deploy:
-    runs-on: macos-latest
+    runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
@@ -36,27 +38,32 @@ jobs:
           workload_identity_provider: projects/79296749603/locations/global/workloadIdentityPools/github/providers/github
           service_account: gh-actions-deploy@wmn-runbooks.iam.gserviceaccount.com
 
-      - name: Install wmn
+      - name: Get wmn and its engine
         env:
+          GH_TOKEN: ${{ github.token }}
           VERSION: ${{ github.event.client_payload.version || inputs.version }}
         run: |
           v="${VERSION#v}"
-          if [ -n "$v" ]; then base="https://github.com/threadedstack/wmn-releases/releases/download/v$v"
-          else base="https://github.com/threadedstack/wmn-releases/releases/latest/download"; fi
-          curl -fsSL "$base/install.sh" | WMN_INSTALL_BASE="$base" WMN_INSTALL_DIR="$HOME/.local/bin" sh
+          if [ -z "$v" ]; then
+            v="$(gh release view --repo threadedstack/wmn-releases --json tagName -q .tagName)"
+            v="${v#v}"
+          fi
+          base="https://github.com/threadedstack/wmn-releases/releases/download/v$v"
+          get() { # a release file, checked against its .sha256
+            curl -fsSL "$base/$1" -o "$RUNNER_TEMP/$1"
+            want="$(curl -fsSL "$base/$1.sha256" | awk '{print $1}')"
+            got="$(sha256sum "$RUNNER_TEMP/$1" | awk '{print $1}')"
+            if [ -z "$want" ] || [ "$want" != "$got" ]; then echo "$1 does not match its sha256" >&2; exit 1; fi
+          }
+          get "wmn-$v-linux-x64"
+          mkdir -p "$HOME/.local/bin" "$RUNNER_TEMP/engine"
+          install -m 755 "$RUNNER_TEMP/wmn-$v-linux-x64" "$HOME/.local/bin/wmn"
+          get "wmn-engine-$v.tar.gz"
+          tar -C "$RUNNER_TEMP/engine" -xzf "$RUNNER_TEMP/wmn-engine-$v.tar.gz"
+          rm "$RUNNER_TEMP/wmn-engine-$v.tar.gz" "$RUNNER_TEMP/wmn-$v-linux-x64"
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
-          v="$("$HOME/.local/bin/wmn" --version | awk '{print $2}')"
-          echo "wmn $v"
-          # the engine folder this release was built with (the release uploads it beside the binary)
-          eng="$RUNNER_TEMP/engine"
-          mkdir -p "$eng"
-          curl -fsSL "$base/wmn-engine-$v.tar.gz" -o "$RUNNER_TEMP/engine.tar.gz"
-          want="$(curl -fsSL "$base/wmn-engine-$v.tar.gz.sha256" | awk '{print $1}')"
-          got="$(shasum -a 256 "$RUNNER_TEMP/engine.tar.gz" | awk '{print $1}')"
-          [ "$want" = "$got" ] || { echo "the engine download does not match its sha256" >&2; exit 1; }
-          tar -C "$eng" -xzf "$RUNNER_TEMP/engine.tar.gz"
-          rm "$RUNNER_TEMP/engine.tar.gz"
-          echo "WMN_ENGINE_DIR=$eng" >> "$GITHUB_ENV"
+          echo "WMN_ENGINE_DIR=$RUNNER_TEMP/engine" >> "$GITHUB_ENV"
+          "$HOME/.local/bin/wmn" --version
 
       - name: Install the Firebase CLI
         run: npm install -g firebase-tools@15.16.0
