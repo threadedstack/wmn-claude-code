@@ -48,10 +48,10 @@ jobs:
             v="$(gh release view --repo threadedstack/wmn-releases --json tagName -q .tagName)"
             v="${v#v}"
           fi
-          base="https://github.com/threadedstack/wmn-releases/releases/download/v$v"
           get() { # a release file, checked against its .sha256
-            curl -fsSL "$base/$1" -o "$RUNNER_TEMP/$1"
-            want="$(curl -fsSL "$base/$1.sha256" | awk '{print $1}')"
+            # through the API: github.com/.../releases/download answered 504 for every release on 2026-11-08
+            gh release download "v$v" --repo threadedstack/wmn-releases --pattern "$1" --pattern "$1.sha256" --dir "$RUNNER_TEMP" --clobber
+            want="$(awk '{print $1}' "$RUNNER_TEMP/$1.sha256")"
             got="$(sha256sum "$RUNNER_TEMP/$1" | awk '{print $1}')"
             if [ -z "$want" ] || [ "$want" != "$got" ]; then echo "$1 does not match its sha256" >&2; exit 1; fi
           }
